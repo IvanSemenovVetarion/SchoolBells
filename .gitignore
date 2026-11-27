@@ -1,0 +1,20 @@
+# Данные и журналы программы
+SchoolBellsData/
+SchoolBellsData_user_backup/
+
+# Тестовые сборки
+SelfTest.exe
+SelfTest.pdb
+*.pdb
+*.obj
+
+# Локальные рабочие папки (не относятся к проекту)
+Chronica/
+DeadlockHighEloRU/
+Mifarium/
+
+# Временные файлы
+*.tmp
+*.bak
+Thumbs.db
+desktop.ini

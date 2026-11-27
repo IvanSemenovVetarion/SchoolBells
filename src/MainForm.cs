@@ -46,12 +46,17 @@ namespace SchoolBells
         private Button _toggleButton;
         private Button _testButton;
         private Button _stopButton;
-        private TabControl _tabs;
-        private TabPage _schedulePage;
-        private TabPage _settingsPage;
-        private TabPage _musicPage;
-        private TabPage _voicePage;
-        private ToolStripStatusLabel _statusLabel;
+        private Panel _pageHost;
+        private Panel _schedulePage;
+        private Panel _settingsPage;
+        private Panel _musicPage;
+        private Panel _voicePage;
+        private readonly System.Collections.Generic.List<RoundedButton> _tabButtons =
+            new System.Collections.Generic.List<RoundedButton>();
+        private readonly System.Collections.Generic.List<Panel> _pages =
+            new System.Collections.Generic.List<Panel>();
+        private Label _statusLabel;
+        private int _selectedTabIndex;
 
         private bool _reallyExit;
         private bool _trayHintShown;
@@ -150,7 +155,7 @@ namespace SchoolBells
 
         private void SelectTabByKey(string key)
         {
-            if (_tabs == null || string.IsNullOrEmpty(key))
+            if (_pages.Count == 0 || string.IsNullOrEmpty(key))
             {
                 return;
             }
@@ -170,10 +175,7 @@ namespace SchoolBells
                 index = 3;
             }
 
-            if (index >= 0 && index < _tabs.TabPages.Count)
-            {
-                _tabs.SelectedIndex = index;
-            }
+            SelectTab(index);
         }
 
         private void SetFormProperties()
@@ -202,56 +204,155 @@ namespace SchoolBells
 
         private void BuildRoot()
         {
+            _tabButtons.Clear();
+            _pages.Clear();
+
             TableLayoutPanel root = new TableLayoutPanel();
             _root = root;
             root.Dock = DockStyle.Fill;
             root.ColumnCount = 1;
             root.RowCount = 3;
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 94f));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 24f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
             root.BackColor = PageBack;
             Controls.Add(root);
 
             root.Controls.Add(BuildHeader(), 0, 0);
 
-            _tabs = new TabControl();
-            _tabs.Dock = DockStyle.Fill;
-            _tabs.Font = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point);
-            _tabs.Padding = new Point(16, 6);
-            _tabs.Margin = new Padding(10, 8, 10, 0);
+            TableLayoutPanel body = new TableLayoutPanel();
+            body.Dock = DockStyle.Fill;
+            body.ColumnCount = 1;
+            body.RowCount = 2;
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            body.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
+            body.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            body.Padding = new Padding(14, 8, 14, 0);
+            body.BackColor = PageBack;
+            body.Controls.Add(BuildTabBar(), 0, 0);
+
+            _pageHost = new Panel();
+            _pageHost.Dock = DockStyle.Fill;
+            _pageHost.BackColor = PageBack;
+            _pageHost.Padding = new Padding(0, 8, 0, 8);
+            body.Controls.Add(_pageHost, 0, 1);
+            root.Controls.Add(body, 0, 1);
 
             _schedulePage = BuildScheduleTab();
             _settingsPage = BuildSettingsTab();
             _musicPage = BuildMusicTab();
             _voicePage = BuildVoiceTab();
-            _tabs.TabPages.Add(_schedulePage);
-            _tabs.TabPages.Add(_settingsPage);
-            _tabs.TabPages.Add(_musicPage);
-            _tabs.TabPages.Add(_voicePage);
-            root.Controls.Add(_tabs, 0, 1);
+            AddPage(_schedulePage);
+            AddPage(_settingsPage);
+            AddPage(_musicPage);
+            AddPage(_voicePage);
+            SelectTab(_selectedTabIndex);
 
-            StatusStrip status = new StatusStrip();
+            Panel status = new Panel();
             status.Dock = DockStyle.Fill;
-            status.SizingGrip = false;
             status.BackColor = StatusBack;
-            status.ForeColor = StatusText;
-            status.Font = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
-            status.Padding = new Padding(8, 0, 8, 0);
+            status.Padding = new Padding(14, 0, 14, 0);
+            status.Paint += delegate(object sender, PaintEventArgs e)
+            {
+                using (Pen pen = new Pen(BorderColor, 1f))
+                {
+                    e.Graphics.DrawLine(pen, 0, 0, status.Width, 0);
+                }
+            };
 
-            _statusLabel = new ToolStripStatusLabel();
-            _statusLabel.Spring = true;
+            TableLayoutPanel statusLayout = new TableLayoutPanel();
+            statusLayout.Dock = DockStyle.Fill;
+            statusLayout.ColumnCount = 2;
+            statusLayout.RowCount = 1;
+            statusLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            statusLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56f));
+            statusLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            statusLayout.BackColor = StatusBack;
+            status.Controls.Add(statusLayout);
+
+            _statusLabel = new Label();
+            _statusLabel.Dock = DockStyle.Fill;
             _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
             _statusLabel.Text = "Готово";
-            status.Items.Add(_statusLabel);
+            _statusLabel.ForeColor = StatusText;
+            _statusLabel.Font = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
+            statusLayout.Controls.Add(_statusLabel, 0, 0);
 
-            ToolStripStatusLabel version = new ToolStripStatusLabel();
-            version.Text = "v1.1";
+            Label version = new Label();
+            version.Text = "v1.2";
+            version.Dock = DockStyle.Fill;
+            version.TextAlign = ContentAlignment.MiddleRight;
             version.ForeColor = HintText;
-            status.Items.Add(version);
+            version.Font = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
+            statusLayout.Controls.Add(version, 1, 0);
 
             root.Controls.Add(status, 0, 2);
+        }
+
+        private Panel BuildTabBar()
+        {
+            Panel bar = new Panel();
+            bar.Dock = DockStyle.Fill;
+            bar.BackColor = PageBack;
+            bar.Margin = new Padding(0);
+
+            FlowLayoutPanel flow = new FlowLayoutPanel();
+            flow.Dock = DockStyle.Fill;
+            flow.FlowDirection = FlowDirection.LeftToRight;
+            flow.WrapContents = false;
+            flow.BackColor = PageBack;
+            flow.Padding = new Padding(0, 2, 0, 2);
+            flow.Margin = new Padding(0);
+            bar.Controls.Add(flow);
+
+            string[] labels = new string[] { "Расписание", "Настройки", "Музыка", "Голосовое оповещение" };
+            int[] widths = new int[] { 128, 118, 92, 198 };
+            for (int i = 0; i < labels.Length; i++)
+            {
+                int tabIndex = i;
+                RoundedButton button = new RoundedButton();
+                button.Text = labels[i];
+                button.Size = new Size(widths[i], 38);
+                button.CornerRadius = 12;
+                button.Margin = new Padding(0, 0, 8, 0);
+                button.Font = new Font("Segoe UI Semibold", 10f, FontStyle.Regular, GraphicsUnit.Point);
+                button.FlatAppearance.BorderSize = 0;
+                button.Click += delegate { SelectTab(tabIndex); };
+                flow.Controls.Add(button);
+                _tabButtons.Add(button);
+            }
+            return bar;
+        }
+
+        private void AddPage(Panel page)
+        {
+            page.Dock = DockStyle.Fill;
+            page.Visible = false;
+            _pages.Add(page);
+            _pageHost.Controls.Add(page);
+        }
+
+        private void SelectTab(int index)
+        {
+            if (index < 0 || index >= _pages.Count)
+            {
+                return;
+            }
+            _selectedTabIndex = index;
+            for (int i = 0; i < _pages.Count; i++)
+            {
+                bool selected = i == index;
+                _pages[i].Visible = selected;
+                if (i < _tabButtons.Count)
+                {
+                    RoundedButton button = _tabButtons[i];
+                    button.BackColor = selected ? Accent : PageBack;
+                    button.ForeColor = selected ? Color.White : TextColor;
+                    button.FlatAppearance.MouseOverBackColor = selected ? AccentHover : GridHeaderBack;
+                    button.Invalidate();
+                }
+            }
         }
 
         private Panel BuildHeader()
@@ -339,12 +440,13 @@ namespace SchoolBells
             right.BackColor = HeaderBack;
             right.Margin = new Padding(0);
 
-            _toggleButton = new Button();
+            _toggleButton = new RoundedButton();
             _toggleButton.Text = "Звонки включены";
             _toggleButton.Dock = DockStyle.Fill;
-            _toggleButton.Margin = new Padding(3, 16, 3, 16);
+            _toggleButton.Margin = new Padding(3, 14, 3, 14);
             _toggleButton.FlatStyle = FlatStyle.Flat;
             _toggleButton.FlatAppearance.BorderSize = 0;
+            ((RoundedButton)_toggleButton).CornerRadius = 11;
             _toggleButton.BackColor = Green;
             _toggleButton.ForeColor = Color.White;
             _toggleButton.Font = new Font("Segoe UI", 9.25f, FontStyle.Bold, GraphicsUnit.Point);
@@ -353,12 +455,13 @@ namespace SchoolBells
             _toggleButton.Click += delegate { SetBellsEnabled(!_settings.Enabled); };
             right.Controls.Add(_toggleButton, 0, 0);
 
-            _testButton = new Button();
+            _testButton = new RoundedButton();
             _testButton.Text = "Пробный звонок";
             _testButton.Dock = DockStyle.Fill;
-            _testButton.Margin = new Padding(3, 16, 3, 16);
+            _testButton.Margin = new Padding(3, 14, 3, 14);
             _testButton.FlatStyle = FlatStyle.Flat;
             _testButton.FlatAppearance.BorderSize = 0;
+            ((RoundedButton)_testButton).CornerRadius = 11;
             _testButton.BackColor = HeaderButton;
             _testButton.ForeColor = Color.White;
             _testButton.Font = new Font("Segoe UI", 9.25f, FontStyle.Regular, GraphicsUnit.Point);
@@ -368,12 +471,13 @@ namespace SchoolBells
             _testButton.Click += delegate { PlayTestBell(); };
             right.Controls.Add(_testButton, 1, 0);
 
-            _stopButton = new Button();
+            _stopButton = new RoundedButton();
             _stopButton.Text = "■";
             _stopButton.Dock = DockStyle.Fill;
-            _stopButton.Margin = new Padding(3, 16, 3, 16);
+            _stopButton.Margin = new Padding(3, 14, 3, 14);
             _stopButton.FlatStyle = FlatStyle.Flat;
             _stopButton.FlatAppearance.BorderSize = 0;
+            ((RoundedButton)_stopButton).CornerRadius = 11;
             _stopButton.BackColor = HeaderButton;
             _stopButton.ForeColor = Color.White;
             _stopButton.Font = new Font("Segoe UI", 13f, FontStyle.Bold, GraphicsUnit.Point);
@@ -613,6 +717,7 @@ namespace SchoolBells
         private bool PlaySound(string path, bool showError, out string error)
         {
             error = null;
+            StopLiveMicrophone();
             if (_recording)
             {
                 CancelVoiceRecording();
@@ -644,6 +749,7 @@ namespace SchoolBells
 
         private void StopPlayback()
         {
+            StopLiveMicrophone();
             _autoStopTimer.Stop();
             _playback.Stop();
             if (_musicPlayback != null)
@@ -825,6 +931,7 @@ namespace SchoolBells
 
         private void HideToTray(bool showBalloon)
         {
+            StopLiveMicrophone();
             if (_recording)
             {
                 CancelVoiceRecording();
@@ -870,13 +977,30 @@ namespace SchoolBells
             }
         }
 
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            if (_palette != null)
+            {
+                WindowChrome.Apply(Handle, _palette.HeaderBack);
+            }
+        }
+
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            if (_palette != null)
+            {
+                WindowChrome.Apply(Handle, _palette.HeaderBack);
+            }
             _timer.Start();
 
             BeginInvoke(new MethodInvoker(delegate
             {
+                if (_palette != null)
+                {
+                    WindowChrome.Apply(Handle, _palette.HeaderBack);
+                }
                 _playback.Prewarm();
 
                 if (!string.IsNullOrEmpty(_loadWarning) && !_startMinimized)
@@ -919,6 +1043,7 @@ namespace SchoolBells
                 return;
             }
 
+            StopLiveMicrophone();
             if (_recording)
             {
                 CancelVoiceRecording();
@@ -992,7 +1117,12 @@ namespace SchoolBells
                 return;
             }
             _palette = palette;
+            UiTheme.Apply(palette);
             HeaderBack = palette.HeaderBack;
+            if (IsHandleCreated)
+            {
+                WindowChrome.Apply(Handle, palette.HeaderBack);
+            }
             HeaderMuted = palette.HeaderMuted;
             HeaderButton = palette.HeaderButton;
             HeaderButtonHover = palette.HeaderButtonHover;
@@ -1026,7 +1156,8 @@ namespace SchoolBells
             _rebuilding = true;
             try
             {
-                int selectedTab = _tabs == null ? 0 : _tabs.SelectedIndex;
+                int selectedTab = _selectedTabIndex;
+                StopLiveMicrophone();
                 if (_recording)
                 {
                     CancelVoiceRecording();
@@ -1062,10 +1193,7 @@ namespace SchoolBells
                 UpdateHeader(DateTime.Now);
                 UpdateToggleButton();
                 UpdateTrayState();
-                if (_tabs != null && selectedTab >= 0 && selectedTab < _tabs.TabPages.Count)
-                {
-                    _tabs.SelectedIndex = selectedTab;
-                }
+                SelectTab(selectedTab);
             }
             finally
             {
@@ -1073,18 +1201,47 @@ namespace SchoolBells
             }
         }
 
+        private void ApplyModernGridStyle(DataGridView grid)
+        {
+            grid.BackgroundColor = PanelBack;
+            grid.BorderStyle = BorderStyle.None;
+            grid.EnableHeadersVisualStyles = false;
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            grid.GridColor = GridLine;
+            grid.RowTemplate.Height = 34;
+            grid.ColumnHeadersHeight = 40;
+            grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            grid.Font = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point);
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point);
+            grid.DefaultCellStyle.BackColor = PanelBack;
+            grid.DefaultCellStyle.ForeColor = TextColor;
+            grid.DefaultCellStyle.SelectionBackColor = GridSelectionBack;
+            grid.DefaultCellStyle.SelectionForeColor = TextColor;
+            grid.DefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
+            grid.AlternatingRowsDefaultCellStyle.BackColor = GridAltBack;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = PanelBack;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = HintText;
+            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = PanelBack;
+            grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = HintText;
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular, GraphicsUnit.Point);
+            grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            grid.RowHeadersVisible = false;
+        }
+
         private Button MakeButton(string text, int width, int height, bool accent)
         {
-            Button button = new Button();
+            RoundedButton button = new RoundedButton();
             button.Text = text;
             button.Size = new Size(width, height);
+            button.CornerRadius = 10;
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = accent ? 0 : 1;
             button.FlatAppearance.BorderColor = BorderColor;
             button.BackColor = accent ? Accent : PanelBack;
             button.ForeColor = accent ? Color.White : TextColor;
-            button.Font = new Font("Segoe UI", 9.25f,
-                accent ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point);
+            button.Font = new Font(accent ? "Segoe UI Semibold" : "Segoe UI", 9.25f,
+                FontStyle.Regular, GraphicsUnit.Point);
             button.Cursor = Cursors.Hand;
             button.UseVisualStyleBackColor = false;
             button.Margin = new Padding(0, 0, 6, 0);

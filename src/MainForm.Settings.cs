@@ -19,20 +19,21 @@ namespace SchoolBells
         private Button _endResetButton;
         private Button _openDataButton;
         private Button _openReadmeButton;
-        private TrackBar _volumeTrack;
+        private ModernSlider _volumeTrack;
         private Label _volumeValueLabel;
-        private CheckBox _ringStartCheck;
-        private CheckBox _ringEndCheck;
-        private CheckBox _autoStartCheck;
-        private CheckBox _minimizeCheck;
+        private ModernCheckBox _ringStartCheck;
+        private ModernCheckBox _ringEndCheck;
+        private ModernCheckBox _autoStartCheck;
+        private ModernCheckBox _minimizeCheck;
         private ComboBox _themeCombo;
-        private CheckBox _snowCheck;
+        private ModernCheckBox _snowCheck;
 
-        private TabPage BuildSettingsTab()
+        private Panel BuildSettingsTab()
         {
-            TabPage page = new TabPage("Настройки");
+            Panel page = new Panel();
+            page.Dock = DockStyle.Fill;
             page.BackColor = PageBack;
-            page.Padding = new Padding(8);
+            page.Padding = new Padding(2, 0, 2, 0);
             page.AutoScroll = true;
 
             TableLayoutPanel content = new TableLayoutPanel();
@@ -80,7 +81,7 @@ namespace SchoolBells
 
         private GroupBox BuildMelodyGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Мелодии звонков";
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
             group.ForeColor = TextColor;
@@ -197,7 +198,7 @@ namespace SchoolBells
             table.Controls.Add(volumePanel, 1, 3);
             table.SetColumnSpan(volumePanel, 2);
 
-            _volumeTrack = new TrackBar();
+            _volumeTrack = new ModernSlider();
             _volumeTrack.Minimum = 0;
             _volumeTrack.Maximum = 100;
             _volumeTrack.TickFrequency = 10;
@@ -233,7 +234,7 @@ namespace SchoolBells
 
         private GroupBox BuildAppearanceGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Оформление";
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
             group.ForeColor = TextColor;
@@ -274,6 +275,8 @@ namespace SchoolBells
             {
                 _themeCombo.Items.Add(ThemeManager.DisplayName(ids[i]));
             }
+            int initialTheme = Array.IndexOf(ids, _settings.Theme);
+            _themeCombo.SelectedIndex = initialTheme >= 0 ? initialTheme : 0;
             _themeCombo.SelectedIndexChanged += ThemeChanged;
             table.Controls.Add(_themeCombo, 1, 0);
 
@@ -299,7 +302,7 @@ namespace SchoolBells
 
         private GroupBox BuildBehaviorGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Поведение";
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
             group.ForeColor = TextColor;
@@ -364,7 +367,7 @@ namespace SchoolBells
 
         private GroupBox BuildDataGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Данные программы";
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
             group.ForeColor = TextColor;
@@ -424,7 +427,7 @@ namespace SchoolBells
 
         private GroupBox BuildAboutGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "О программе";
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
             group.ForeColor = TextColor;
@@ -458,7 +461,7 @@ namespace SchoolBells
             table.Controls.Add(aboutText, 0, 0);
 
             Label title = new Label();
-            title.Text = "Школьные звонки, версия 1.1";
+            title.Text = "Школьные звонки, версия 1.2";
             title.Dock = DockStyle.Fill;
             title.TextAlign = ContentAlignment.MiddleLeft;
             title.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold, GraphicsUnit.Point);
@@ -502,9 +505,9 @@ namespace SchoolBells
             return panel;
         }
 
-        private CheckBox MakeCheckBox(string text)
+        private ModernCheckBox MakeCheckBox(string text)
         {
-            CheckBox check = new CheckBox();
+            ModernCheckBox check = new ModernCheckBox();
             check.Text = text;
             check.AutoSize = true;
             check.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular, GraphicsUnit.Point);

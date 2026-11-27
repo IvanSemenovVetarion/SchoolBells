@@ -9,7 +9,6 @@ namespace SchoolBells
     {
         private readonly CheckedListBox _list;
         private readonly int _sourceDay;
-        private readonly AppSettings _settings;
         private readonly List<int> _dayIndices;
 
         public List<int> SelectedDays { get; private set; }
@@ -17,7 +16,6 @@ namespace SchoolBells
         public CopyDaysForm(int sourceDay, AppSettings settings)
         {
             _sourceDay = sourceDay;
-            _settings = settings;
             _dayIndices = new List<int>();
             SelectedDays = new List<int>();
 
@@ -27,34 +25,44 @@ namespace SchoolBells
             MaximizeBox = false;
             MinimizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(430, 390);
+            ClientSize = new Size(472, 436);
             Font = new Font("Segoe UI", 9.5f, FontStyle.Regular, GraphicsUnit.Point);
-            BackColor = Color.FromArgb(247, 249, 252);
+            BackColor = UiTheme.PageBack;
 
             Label caption = new Label();
-            caption.Text = "Скопировать расписание дня «" + ScheduleEngine.DayName(sourceDay) + "» в дни:";
+            caption.Text = "Скопировать расписание дня «" + ScheduleEngine.DayName(sourceDay) + "»";
             caption.AutoSize = false;
-            caption.Location = new Point(16, 14);
-            caption.Size = new Size(398, 24);
-            caption.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
+            caption.Location = new Point(20, 16);
+            caption.Size = new Size(432, 26);
+            caption.Font = new Font("Segoe UI Semibold", 11.5f, FontStyle.Regular, GraphicsUnit.Point);
+            caption.ForeColor = UiTheme.Text;
             Controls.Add(caption);
 
             Label hint = new Label();
-            hint.Text = "Отметьте нужные дни. Существующее расписание выбранных дней будет заменено.";
+            hint.Text = "Отметьте дни, в которые нужно перенести расписание. Существующее расписание выбранных дней будет заменено.";
             hint.AutoSize = false;
-            hint.Location = new Point(16, 40);
-            hint.Size = new Size(398, 34);
-            hint.ForeColor = Color.FromArgb(95, 108, 122);
+            hint.Location = new Point(20, 46);
+            hint.Size = new Size(432, 36);
+            hint.ForeColor = UiTheme.Muted;
+            hint.Font = new Font("Segoe UI", 8.75f, FontStyle.Regular, GraphicsUnit.Point);
             Controls.Add(hint);
 
+            RoundedPanel listHost = new RoundedPanel();
+            listHost.Location = new Point(20, 90);
+            listHost.Size = new Size(432, 258);
+            listHost.BackColor = UiTheme.CardBack;
+            listHost.CornerRadius = 12;
+            listHost.Padding = new Padding(7);
+            Controls.Add(listHost);
+
             _list = new CheckedListBox();
+            _list.Dock = DockStyle.Fill;
             _list.CheckOnClick = true;
             _list.IntegralHeight = false;
-            _list.BorderStyle = BorderStyle.FixedSingle;
+            _list.BorderStyle = BorderStyle.None;
+            _list.BackColor = UiTheme.CardBack;
+            _list.ForeColor = UiTheme.Text;
             _list.Font = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point);
-            _list.Location = new Point(16, 80);
-            _list.Size = new Size(398, 222);
-            _list.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             for (int day = 0; day < 8; day++)
             {
                 if (day == sourceDay)
@@ -74,54 +82,48 @@ namespace SchoolBells
                 _list.Items.Add(label + "  —  " + suffix, false);
                 _dayIndices.Add(day);
             }
-            Controls.Add(_list);
+            listHost.Controls.Add(_list);
 
-            Button selectAll = new Button();
-            selectAll.Text = "Выбрать все";
-            selectAll.FlatStyle = FlatStyle.Flat;
-            selectAll.FlatAppearance.BorderColor = Color.FromArgb(198, 210, 224);
-            selectAll.BackColor = Color.White;
-            selectAll.Location = new Point(16, 316);
-            selectAll.Size = new Size(100, 30);
+            RoundedButton selectAll = MakeDialogButton("Выбрать все", 112, 32, false);
+            selectAll.Location = new Point(20, 362);
             selectAll.Click += delegate { SetAllChecked(true); };
             Controls.Add(selectAll);
 
-            Button clearAll = new Button();
-            clearAll.Text = "Снять все";
-            clearAll.FlatStyle = FlatStyle.Flat;
-            clearAll.FlatAppearance.BorderColor = Color.FromArgb(198, 210, 224);
-            clearAll.BackColor = Color.White;
-            clearAll.Location = new Point(122, 316);
-            clearAll.Size = new Size(90, 30);
+            RoundedButton clearAll = MakeDialogButton("Снять все", 100, 32, false);
+            clearAll.Location = new Point(140, 362);
             clearAll.Click += delegate { SetAllChecked(false); };
             Controls.Add(clearAll);
 
-            Button ok = new Button();
-            ok.Text = "Копировать";
-            ok.DialogResult = DialogResult.None;
-            ok.BackColor = Color.FromArgb(45, 108, 180);
-            ok.ForeColor = Color.White;
-            ok.FlatStyle = FlatStyle.Flat;
-            ok.FlatAppearance.BorderSize = 0;
-            ok.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold, GraphicsUnit.Point);
-            ok.Location = new Point(224, 316);
-            ok.Size = new Size(110, 32);
+            RoundedButton ok = MakeDialogButton("Копировать", 124, 34, true);
+            ok.Location = new Point(248, 361);
             ok.Click += OkClick;
             Controls.Add(ok);
 
-            Button cancel = new Button();
-            cancel.Text = "Отмена";
+            RoundedButton cancel = MakeDialogButton("Отмена", 84, 34, false);
+            cancel.Location = new Point(380, 361);
             cancel.DialogResult = DialogResult.Cancel;
-            cancel.FlatStyle = FlatStyle.Flat;
-            cancel.FlatAppearance.BorderColor = Color.FromArgb(198, 210, 224);
-            cancel.BackColor = Color.White;
-            cancel.Location = new Point(342, 316);
-            cancel.Size = new Size(72, 32);
             Controls.Add(cancel);
 
             AcceptButton = ok;
             CancelButton = cancel;
             ActiveControl = _list;
+        }
+
+        private RoundedButton MakeDialogButton(string text, int width, int height, bool accent)
+        {
+            RoundedButton button = new RoundedButton();
+            button.Text = text;
+            button.Size = new Size(width, height);
+            button.CornerRadius = 9;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = accent ? 0 : 1;
+            button.FlatAppearance.BorderColor = UiTheme.Border;
+            button.BackColor = accent ? UiTheme.Accent : UiTheme.CardBack;
+            button.ForeColor = accent ? Color.White : UiTheme.Text;
+            button.Font = new Font(accent ? "Segoe UI Semibold" : "Segoe UI", 9.25f,
+                FontStyle.Regular, GraphicsUnit.Point);
+            button.FlatAppearance.MouseOverBackColor = accent ? UiTheme.AccentHover : UiTheme.Track;
+            return button;
         }
 
         private void OkClick(object sender, EventArgs e)

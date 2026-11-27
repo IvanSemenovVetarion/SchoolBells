@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SchoolBells
@@ -21,14 +22,15 @@ namespace SchoolBells
         private int _currentDayIndex = -1;
         private bool _loadingGrid;
         private bool _updatingDayList;
-        private CheckBox[] _shortChecks;
+        private ModernCheckBox[] _shortChecks;
         private bool _updatingShortDays;
 
-        private TabPage BuildScheduleTab()
+        private Panel BuildScheduleTab()
         {
-            TabPage page = new TabPage("Расписание");
+            Panel page = new Panel();
+            page.Dock = DockStyle.Fill;
             page.BackColor = PageBack;
-            page.Padding = new Padding(8);
+            page.Padding = new Padding(2, 0, 2, 0);
 
             SplitContainer split = new SplitContainer();
             split.Dock = DockStyle.Fill;
@@ -97,11 +99,23 @@ namespace SchoolBells
             _dayList = new ListBox();
             _dayList.Dock = DockStyle.Fill;
             _dayList.IntegralHeight = false;
-            _dayList.BorderStyle = BorderStyle.FixedSingle;
-            _dayList.Font = new Font("Segoe UI", 10.5f, FontStyle.Regular, GraphicsUnit.Point);
-            _dayList.Margin = new Padding(0, 4, 0, 8);
+            _dayList.BorderStyle = BorderStyle.None;
+            _dayList.BackColor = PanelBack;
+            _dayList.ForeColor = TextColor;
+            _dayList.Font = new Font("Segoe UI", 10.25f, FontStyle.Regular, GraphicsUnit.Point);
+            _dayList.DrawMode = DrawMode.OwnerDrawFixed;
+            _dayList.ItemHeight = 32;
             _dayList.SelectedIndexChanged += DayListSelectedIndexChanged;
-            left.Controls.Add(_dayList, 0, 2);
+            _dayList.DrawItem += DayListDrawItem;
+
+            RoundedPanel listHost = new RoundedPanel();
+            listHost.Dock = DockStyle.Fill;
+            listHost.BackColor = PanelBack;
+            listHost.CornerRadius = 12;
+            listHost.Padding = new Padding(5);
+            listHost.Margin = new Padding(0, 4, 0, 8);
+            listHost.Controls.Add(_dayList);
+            left.Controls.Add(listHost, 0, 2);
 
             TableLayoutPanel dayButtons = new TableLayoutPanel();
             dayButtons.Dock = DockStyle.Top;
@@ -177,10 +191,12 @@ namespace SchoolBells
             _tips.SetToolTip(_downButton, "Переместить звонок ниже");
             _tips.SetToolTip(_sortButton, "Упорядочить звонки по времени начала");
 
-            Panel gridHost = new Panel();
+            RoundedPanel gridHost = new RoundedPanel();
             gridHost.Dock = DockStyle.Fill;
             gridHost.BackColor = PanelBack;
-            gridHost.Padding = new Padding(0, 0, 0, 2);
+            gridHost.CornerRadius = 13;
+            gridHost.Padding = new Padding(10, 8, 10, 8);
+            gridHost.Margin = new Padding(0, 0, 0, 4);
             right.Controls.Add(gridHost, 0, 1);
 
             _grid = new BufferedDataGridView();
@@ -264,6 +280,11 @@ namespace SchoolBells
             commentColumn.SortMode = DataGridViewColumnSortMode.NotSortable;
             _grid.Columns.Add(commentColumn);
 
+            ApplyModernGridStyle(_grid);
+            _grid.Columns["number"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _grid.Columns["start"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _grid.Columns["end"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
             _daySummaryLabel = new Label();
             _daySummaryLabel.Dock = DockStyle.Fill;
             _daySummaryLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -278,7 +299,7 @@ namespace SchoolBells
 
         private GroupBox BuildShortDayGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Короткий день";
             group.Dock = DockStyle.Top;
             group.AutoSize = true;
@@ -305,15 +326,16 @@ namespace SchoolBells
             grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             group.Controls.Add(grid);
 
-            _shortChecks = new CheckBox[7];
+            _shortChecks = new ModernCheckBox[7];
             _updatingShortDays = true;
             try
             {
                 for (int day = 0; day < 7; day++)
                 {
-                    CheckBox check = new CheckBox();
+                    ModernCheckBox check = new ModernCheckBox();
                     check.Text = ScheduleEngine.DayNameShort(day);
-                    check.AutoSize = true;
+                    check.AutoSize = false;
+                    check.Size = new Size(58, 24);
                     check.Font = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
                     check.ForeColor = TextColor;
                     check.Checked = _settings.IsShortDay(day);
@@ -324,7 +346,7 @@ namespace SchoolBells
                     grid.Controls.Add(check, day % 4, day / 4);
                 }
 
-                Label hint = MakeHintLabel("Отметьте дни, когда действует шаблон «Короткий день».");
+                Label hint = MakeHintLabel("Отметьте короткие дни недели.");
                 hint.Dock = DockStyle.Fill;
                 hint.TextAlign = ContentAlignment.TopLeft;
                 hint.Padding = new Padding(2, 2, 0, 0);
@@ -346,7 +368,7 @@ namespace SchoolBells
                 return;
             }
 
-            CheckBox check = sender as CheckBox;
+            ModernCheckBox check = sender as ModernCheckBox;
             if (check == null || check.Tag == null)
             {
                 return;
@@ -364,6 +386,38 @@ namespace SchoolBells
             ShowStatus(check.Checked
                 ? ScheduleEngine.DayName(day) + " отмечен как короткий день."
                 : ScheduleEngine.DayName(day) + " снова использует обычное расписание.");
+        }
+
+        private void DayListDrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0 || e.Index >= _dayList.Items.Count)
+            {
+                return;
+            }
+
+            Graphics g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using (SolidBrush clear = new SolidBrush(PanelBack))
+            {
+                g.FillRectangle(clear, e.Bounds);
+            }
+
+            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            Rectangle row = new Rectangle(e.Bounds.X + 2, e.Bounds.Y + 2, e.Bounds.Width - 5, e.Bounds.Height - 4);
+            if (selected)
+            {
+                using (GraphicsPath path = RoundGeometry.Create(row, 8))
+                using (SolidBrush brush = new SolidBrush(Accent))
+                {
+                    g.FillPath(brush, path);
+                }
+            }
+
+            Color textColor = selected ? Color.White : TextColor;
+            Rectangle textBounds = new Rectangle(row.X + 9, row.Y, row.Width - 14, row.Height);
+            TextRenderer.DrawText(g, _dayList.Items[e.Index].ToString(), e.Font, textBounds, textColor,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix |
+                TextFormatFlags.EndEllipsis);
         }
 
         private void RefreshDayList()
@@ -1019,10 +1073,7 @@ namespace SchoolBells
                 return;
             }
 
-            if (_tabs != null && _schedulePage != null)
-            {
-                _tabs.SelectedTab = _schedulePage;
-            }
+            SelectTab(0);
 
             for (int row = 0; row < _grid.Rows.Count; row++)
             {

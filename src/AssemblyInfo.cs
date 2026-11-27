@@ -6,6 +6,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("Школьные звонки")]
 [assembly: AssemblyCompany("Иван Семёнов")]
 [assembly: AssemblyCopyright("© 2026 Иван Семёнов · https://github.com/IvanSemenovVetarion")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyFileVersion("1.2.0.0")]
 [assembly: ComVisible(false)]

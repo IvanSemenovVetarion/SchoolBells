@@ -16,16 +16,17 @@ namespace SchoolBells
 
         private DataGridView _musicGrid;
         private ListBox _playlistList;
-        private CheckBox _musicEnabledCheck;
-        private TrackBar _musicVolumeTrack;
+        private ModernCheckBox _musicEnabledCheck;
+        private ModernSlider _musicVolumeTrack;
         private Label _musicVolumeLabel;
         private bool _loadingMusicGrid;
 
-        private TabPage BuildMusicTab()
+        private Panel BuildMusicTab()
         {
-            TabPage page = new TabPage("Музыка");
+            Panel page = new Panel();
+            page.Dock = DockStyle.Fill;
             page.BackColor = PageBack;
-            page.Padding = new Padding(8);
+            page.Padding = new Padding(2, 0, 2, 0);
 
             TableLayoutPanel content = new TableLayoutPanel();
             content.Dock = DockStyle.Fill;
@@ -44,7 +45,7 @@ namespace SchoolBells
 
         private GroupBox BuildScheduledMusicGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Музыка по расписанию";
             group.Dock = DockStyle.Fill;
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
@@ -185,6 +186,10 @@ namespace SchoolBells
             commentColumn.SortMode = DataGridViewColumnSortMode.NotSortable;
             _musicGrid.Columns.Add(commentColumn);
 
+            ApplyModernGridStyle(_musicGrid);
+            _musicGrid.Columns["start"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _musicGrid.Columns["end"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
             Label hint = MakeHintLabel(
                 "Время можно вводить как 08:00, 0800 или 800. Файлы копируются в папку программы.\n" +
                 "Музыка звучит с начала до конца интервала через динамики компьютера или школьную трансляцию.");
@@ -200,7 +205,7 @@ namespace SchoolBells
 
         private GroupBox BuildManualMusicGroup()
         {
-            GroupBox group = new GroupBox();
+            CardPanel group = new CardPanel();
             group.Text = "Музыка вручную";
             group.Dock = DockStyle.Fill;
             group.Font = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
@@ -267,7 +272,7 @@ namespace SchoolBells
             volumeLabel.Font = new Font("Segoe UI", 9.25f, FontStyle.Regular, GraphicsUnit.Point);
             volumePanel.Controls.Add(volumeLabel);
 
-            _musicVolumeTrack = new TrackBar();
+            _musicVolumeTrack = new ModernSlider();
             _musicVolumeTrack.Minimum = 0;
             _musicVolumeTrack.Maximum = 100;
             _musicVolumeTrack.TickFrequency = 10;
@@ -749,6 +754,7 @@ namespace SchoolBells
                 return false;
             }
 
+            StopLiveMicrophone();
             if (_recording)
             {
                 CancelVoiceRecording();

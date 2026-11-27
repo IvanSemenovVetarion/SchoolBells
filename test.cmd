@@ -16,7 +16,9 @@ if not exist "%CSC%" (
     src\Storage.cs ^
     src\Playback.cs ^
     src\Theme.cs ^
+    src\Controls.cs ^
     src\Recording.cs ^
+    src\LiveAudio.cs ^
     src\CopyDaysForm.cs ^
     src\MainForm.cs ^
     src\MainForm.Schedule.cs ^

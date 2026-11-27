@@ -340,6 +340,11 @@ namespace SchoolBells
                 {
                     return;
                 }
+                Form form = FindForm();
+                if (form != null && (form.WindowState == FormWindowState.Minimized || !form.Visible))
+                {
+                    return;
+                }
                 for (int i = 0; i < _flakes.Count; i++)
                 {
                     Flake flake = _flakes[i];

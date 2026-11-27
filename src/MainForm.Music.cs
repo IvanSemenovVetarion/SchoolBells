@@ -58,16 +58,18 @@ namespace SchoolBells
             layout.ColumnCount = 1;
             layout.RowCount = 3;
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40f));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
             layout.BackColor = PanelBack;
             group.Controls.Add(layout);
 
             FlowLayoutPanel toolbar = new FlowLayoutPanel();
-            toolbar.Dock = DockStyle.Fill;
+            toolbar.Dock = DockStyle.Top;
+            toolbar.AutoSize = true;
+            toolbar.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             toolbar.FlowDirection = FlowDirection.LeftToRight;
-            toolbar.WrapContents = false;
+            toolbar.WrapContents = true;
             toolbar.Margin = new Padding(0);
             layout.Controls.Add(toolbar, 0, 0);
 

@@ -109,6 +109,12 @@ namespace SchoolBells
             ActiveControl = _list;
         }
 
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            WindowChrome.Apply(Handle, UiTheme.HeaderBack);
+        }
+
         private RoundedButton MakeDialogButton(string text, int width, int height, bool accent)
         {
             RoundedButton button = new RoundedButton();

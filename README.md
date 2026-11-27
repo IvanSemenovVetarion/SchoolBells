@@ -8,6 +8,8 @@
 Лёгкая портативная программа автоматических школьных звонков для Windows 10 и Windows 11.
 Работает без установки, не требует прав администратора и подходит для старого ноутбука.
 
+> **Скачать:** [последний релиз](https://github.com/IvanSemenovVetarion/SchoolBells/releases/latest)
+
 ![Главное окно](docs/screenshots/schedule.png)
 
 ## Возможности
